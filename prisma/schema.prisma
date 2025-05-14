@@ -1,0 +1,71 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  campaigns     Campaign[]
+  segments      Segment[]
+}
+
+model Segment {
+  id          String    @id @default(cuid())
+  name        String
+  rules       Json      // Stores the segment rules as JSON
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   User      @relation(fields: [userId], references: [id])
+  userId      String
+  campaigns   Campaign[]
+  customers   Customer[]
+}
+
+model Campaign {
+  id          String    @id @default(cuid())
+  name        String
+  message     String
+  status      String    // DRAFT, SCHEDULED, SENT
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   User      @relation(fields: [userId], references: [id])
+  userId      String
+  segment     Segment   @relation(fields: [segmentId], references: [id])
+  segmentId   String
+  logs        CommunicationLog[]
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  spend       Float     @default(0)
+  visits      Int       @default(0)
+  lastPurchase DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  segment     Segment   @relation(fields: [segmentId], references: [id])
+  segmentId   String
+  logs        CommunicationLog[]
+}
+
+model CommunicationLog {
+  id          String    @id @default(cuid())
+  campaign    Campaign  @relation(fields: [campaignId], references: [id])
+  campaignId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  String
+  status      String    // SENT, FAILED
+  message     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+} 
